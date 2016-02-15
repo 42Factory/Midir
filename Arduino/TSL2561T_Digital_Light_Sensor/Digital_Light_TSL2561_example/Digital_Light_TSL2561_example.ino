@@ -30,7 +30,7 @@
  */
 
 #include <Wire.h>
-#include <Digital_Light_TSL2561.h>
+#include "Digital_Light_TSL2561.h"
 
 void setup()
 {
