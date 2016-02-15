@@ -4,8 +4,10 @@ from collections import OrderedDict
 from firebase import firebase
 from uuid import getnode as get_mac
 
+addressFirebase = 'https://your-firebase-id.firebaseio.com';
+
 # Connecting to firebase
-firebase = firebase.FirebaseApplication('https://brilliant-heat-7159.firebaseio.com', None)
+firebase = firebase.FirebaseApplication(addressFirebase, None)
 
 while True:
 
@@ -69,4 +71,4 @@ while True:
 			try:
 				arduino = serial.Serial('/dev/ttyUSB1', 9600)
 			except serial.SerialException:
-				print("Arduino not connected !")
+				print 'Arduino not connected !'
