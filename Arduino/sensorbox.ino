@@ -1,10 +1,12 @@
+#include "Sensor_Box.h"
+
 /* Importing needed librairies for I2C digital sensor */
 #include "Digital_Light_TSL2561.h"
 #include "HTU21DF.h"
 
 #define HOSTNAME "sensorbox-1"  /* Sensorbox ID will appear on the firebase */
 #define TIME_SLEEP 10           /* Time in ms between each loop */
-#define PUBLISH 10000             /* Number of loop between each transmission of datas */
+#define PUBLISH 100             /* Number of loop between each transmission of datas */
 
 /* Here we define PINS on which analog sensor are connected to */
 #define PIN_HYSRF05_ULTRASON_ECHO 5
@@ -20,8 +22,8 @@ int cpt = 0;
 void setup() 
 {
   /* Opening USB Serial connection with the raspberry */
-  Serial.begin(9600);
-
+  sensorbox.begin(HOSTNAME);
+  
   /* Iinit I2C sensor */
   tsl2561.begin();
   htu21df.begin();
@@ -30,11 +32,6 @@ void setup()
   pinMode(PIN_HYSRF05_ULTRASON_ECHO, INPUT);
   pinMode(PIN_HYSRF05_ULTRASON_TRIGGER, OUTPUT);
   pinMode(PIN_LM358_SOUND, INPUT);
-
-  /* Sending initialise settings to the raspberry */
-  Serial.println("SETUP");
-  Serial.print("HOSTNAME ");
-  Serial.println(HOSTNAME);
 }
 
 /* Here is the part of the program which will be loop executed */
@@ -59,38 +56,26 @@ void loop()
     double temperature_HTU21DF = htu21df.readTemperature();
 
     /* Telling to raspberry it's time to record */
-    Serial.println("BEGIN");
+    sensorbox.beginTransmission();
 
     /* Sending datas */
-    Serial.print("DISTANCE_ULTRASON ");
-    Serial.println(distance_HYSRF05);
+    sensorbox.send("DISTANCE_ULTRASON", distance_HYSRF05);
+    sensorbox.send("SOUND", sound_LM358);
     
-    Serial.print("SOUND ");
-    Serial.println(sound_LM358);
-
     /* -1 : TSL256 is unplugged */
     if (lux_TSL2561 > -1)
-    {
-      Serial.print("LUX ");
-      Serial.println(lux_TSL2561);
-    }
+      sensorbox.send("LUX", lux_TSL2561);
 
     /* 999 : HTU CRC_Check failed 
      * 998 : HTU is unplugged */
     if (humidity_HTU21DF < 998)
-    {
-      Serial.print("HUMIDITY ");
-      Serial.println(humidity_HTU21DF);
-    }
+      sensorbox.send("HUMIDITY", humidity_HTU21DF);
 
     if (temperature_HTU21DF < 998)
-    {
-      Serial.print("TEMPERATURE ");
-      Serial.println(temperature_HTU21DF);
-    }
+      sensorbox.send("TEMPERATURE", temperature_HTU21DF);
 
     /* Telling to raspberry it's the ending of transmission */
-    Serial.println("END");
+    sensorbox.endTransmission();
 
     /* Re-initiliazing variables */
     cpt = 0;

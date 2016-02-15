@@ -11,11 +11,8 @@ while True:
 
 	try:
 		
-		# If arduino is undefined
-		try:
-			arduino
-		except NameError:
-			arduino = serial.Serial('/dev/ttyUSB0', 9600)
+		# Check arduino is undefined
+		arduino
 		
 		if 'SETUP' in arduino.readline():
 			
@@ -62,7 +59,7 @@ while True:
 			else:
 				datasToSend.append(dataRead[:-2])
 			
-	except serial.SerialException:
+	except (NameError, serial.SerialException):
 		
 		# If we unplug/replug the arduino, ttyUSB0 will not appear anymore in TTY devices but the USB manager
 		# will address ttyUSB1 on replug, thinking ttyUSB0 is still used
