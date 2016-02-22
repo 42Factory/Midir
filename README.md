@@ -59,4 +59,3 @@ Then install the library :
 You should have something like this at this point : 
 
 You should have precision temperature, pressure and altitude data in the Serial Monitor
-
