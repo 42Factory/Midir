@@ -64,36 +64,103 @@ You should have precision temperature, pressure and altitude data in the Serial 
 
 Installation on clean install of Ubuntu 14.04 LTS
 
+```
+#!shell
+
 sudo apt-get upgrade
+
+```
+
+```
+#!shell
 
 sudo apt-get -y install build-essential mysql-server mysql-client libmysqlclient-dev libxml2-dev libxslt-dev git-core curl ruby
 
+```
+
+```
+#!shell
+
 gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+
+```
+
+```
+#!shell
 
 \curl -sSL https://get.rvm.io | bash -s stable
 
+```
+
 **Restart shell**
 
+
+```
+#!shell
+
 rvm install 2.1
+```
+
+
+```
+#!shell
 
 git clone https://github.com/iobridge/thingspeak.git
 
+```
+
+```
+#!shell
+
 cd thingspeak
 
+```
+
+```
+#!shell
+
 sudo apt-get install bundler
+
+```
 
 **Edit Gemfile**
 change line *gem 'ZenTest'* by *gem 'ZenTest', '4.8.3'*
 
+```
+#!shell
+
+
 bundle install
+```
+
+
+```
+#!shell
 
 cp config/database.yml.example config/database.yml
+
+```
 
 **Edit config/database.yml**
 change user passwork with your credit
 
+
+```
+#!shell
+
 rake db:create
+```
+
+
+```
+#!shell
 
 rake db:schema:load
 
+```
+
+```
+#!shell
+
 rails server
+```
