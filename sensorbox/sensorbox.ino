@@ -1,31 +1,34 @@
 #include "Sensor_Box.h"
 
-/* Importing needed librairies for I2C digital sensor */
+// Importing needed librairies for I2C digital sensor */
 #include "Digital_Light_TSL2561.h"
 #include "HTU21DF.h"
 
-/* Wifi settings */
+// Wifi settings
 #define WIFI_SSID "HERE_YOUR_SSID"
 #define WIFI_WPA_KEY "HERE_YOUR_WPAKEY"
 
-/* ThingSpeak settings */
-#define THINGSPEAK_API_KEY "6Z6JCTHT3YZEOMXM"
+
+// ThingSpeak settings
+#define THINGSPEAK_SERVER "api.thingspeak.com"
+#define THINGSPEAK_API_KEY "HERE_YOUR_TS_API_KEY"
 #define FIELD_TEMPERATURE 1
 #define FIELD_HUMIDITY 2
 #define FIELD_PRESENCE 3
-#define FIELD_NOISE 4
+#define FIELD_SOUND 4
 #define FIELD_LIGHT 5
 
-#define HOSTNAME "sensorbox-1"  /* Sensorbox ID will appear on the firebase */
+// Program settings
+#define DEBUG true
 #define TIME_SLEEP 10           /* Time in ms between each loop */
 #define PUBLISH 100             /* Number of loop between each transmission of datas */
 
-/* Here we define PINS on which analog sensor are connected to */
-#define PIN_HYSRF05_PRESENCE_ECHO 5
-#define PIN_HYSRF05_PRESENCE_TRIGGER 6
+// Here we define PINS on which analog sensor are connected to
+#define PIN_HYSRF05_PRESENCE_ECHO 46
+#define PIN_HYSRF05_PRESENCE_TRIGGER 47
 #define PIN_LM358_SOUND A2
 
-/* Declaring variables */
+// Declaring variables
 long values_HYSRF05_PRESENCE = 0;
 double values_LM358_SOUND = 0;
 int cpt = 0;
@@ -33,8 +36,13 @@ int cpt = 0;
 /* Here is the part of the program which will be executed once on start-up */
 void setup() 
 {
-  /* Opening USB Serial connection with the raspberry */
-  sensorbox.begin(WIFI_SSID, WIFI_WPA_KEY, THINGSPEAK_API_KEY);
+  if (DEBUG)
+    Serial.begin(9600);
+
+  /* Initializing the Sensorbox */
+  sensorbox.begin(WIFI_SSID, WIFI_WPA_KEY, THINGSPEAK_SERVER, THINGSPEAK_API_KEY);
+
+  Serial.println("Setup");
   
   /* Iinit I2C sensor */
   tsl2561.begin();
@@ -59,36 +67,41 @@ void loop()
   if (cpt >= PUBLISH)
   {
     /* Doing the average of values read by analog sensor  */
-    double distance_HYSRF05 = values_HYSRF05_PRESENCE / cpt;
+    double presence_HYSRF05 = values_HYSRF05_PRESENCE / cpt;
     double sound_LM358 = values_LM358_SOUND / cpt;
 
     /* Getting the values from I2C digital sensors */
-    long lux_TSL2561 = tsl2561.readVisibleLux();
+    long light_TSL2561 = tsl2561.readVisibleLux();
     double humidity_HTU21DF = htu21df.readHumidity();
     double temperature_HTU21DF = htu21df.readTemperature();
 
-    /* Preparing the request */
-    sensorbox.prepareRequest();
+    Serial.println(sound_LM358);
+    Serial.println(presence_HYSRF05);
+    Serial.println(light_TSL2561);
+    Serial.println(humidity_HTU21DF);
+    Serial.println(temperature_HTU21DF);
+    
+    // Preparing the request
+    sensorbox.prepare();
 
     // Adding datas    
-    sensorbox.addData(FIELD_PRESENCE, distance_HYSRF05);
-    sensorbox.addData(FIELD_NOISE, sound_LM358);
+    sensorbox.addData(FIELD_PRESENCE, "Presence", presence_HYSRF05);
+    sensorbox.addData(FIELD_SOUND, "Sound", sound_LM358);
 
     // 999 : HTU CRC_Check failed 
     // 998 : HTU is unplugged
     if (temperature_HTU21DF < 998)
-      sensorbox.addData(FIELD_TEMPERATURE, temperature_HTU21DF);
+      sensorbox.addData(FIELD_TEMPERATURE, "Temperature", temperature_HTU21DF);
 
     if (humidity_HTU21DF < 998)
-      sensorbox.addData(FIELD_HUMIDITY, humidity_HTU21DF);
+      sensorbox.addData(FIELD_HUMIDITY, "Humidity", humidity_HTU21DF);
 
     // -1 : TSL256 is unplugged
-    if (lux_TSL2561 > -1)
-      sensorbox.addData(FIELD_LIGHT, lux_TSL2561);
-    /*
+    if (light_TSL2561 > -1)
+      sensorbox.addData(FIELD_LIGHT, "Light", light_TSL2561);
 
-    /* Sending datas */
-    sensorbox.sendRequest();
+    // Sending datas
+    sensorbox.send();
 
     /* Re-initiliazing variables */
     cpt = 0;
