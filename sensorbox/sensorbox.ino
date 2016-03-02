@@ -5,13 +5,14 @@
 #include "HTU21DF.h"
 
 // Wifi settings
-#define WIFI_SSID "HERE_YOUR_SSID"
-#define WIFI_WPA_KEY "HERE_YOUR_WPAKEY"
-
+#define WIFI_SSID "42Factory"
+#define WIFI_WPA_KEY "answeris42"
 
 // ThingSpeak settings
-#define THINGSPEAK_SERVER "api.thingspeak.com"
-#define THINGSPEAK_API_KEY "HERE_YOUR_TS_API_KEY"
+#define THINGSPEAK_SERVER "api.thingspeak.com:80"
+#define THINGSPEAK_API_KEY "6Z6JCTHT3YZEOMXM"
+//#define THINGSPEAK_SERVER "172.21.9.118:3000"
+//#define THINGSPEAK_API_KEY "CAH53VTAOJF4I56H"
 #define FIELD_TEMPERATURE 1
 #define FIELD_HUMIDITY 2
 #define FIELD_PRESENCE 3
@@ -20,65 +21,75 @@
 
 // Program settings
 #define DEBUG true
-#define TIME_SLEEP 10           /* Time in ms between each loop */
-#define PUBLISH 100             /* Number of loop between each transmission of datas */
+#define TIME_SLEEP 10           // Time in ms between each loop
+#define PUBLISH 100             // Number of loop between each transmission of datas
+#define ADC_VALUE 4600          // Votlage measured on 5V pin
 
 // Here we define PINS on which analog sensor are connected to
-#define PIN_HYSRF05_PRESENCE_ECHO 46
-#define PIN_HYSRF05_PRESENCE_TRIGGER 47
+#define PIN_HYSRF05_PRESENCE_ECHO 8
+#define PIN_HYSRF05_PRESENCE_TRIGGER 9
 #define PIN_LM358_SOUND A2
+
+// Required to define optionnal parameter
+// To measure distance from the HYSRF05, the 
+long read_HYSRF05_PRESENCE(double temperature = 23.00);
 
 // Declaring variables
 long values_HYSRF05_PRESENCE = 0;
 double values_LM358_SOUND = 0;
 int cpt = 0;
 
-/* Here is the part of the program which will be executed once on start-up */
+// Here is the part of the program which will be executed once on start-up
 void setup() 
 {
   if (DEBUG)
     Serial.begin(9600);
 
-  /* Initializing the Sensorbox */
+  Serial.println("Setup");
+
+  // Initializing the Sensorbox
   sensorbox.begin(WIFI_SSID, WIFI_WPA_KEY, THINGSPEAK_SERVER, THINGSPEAK_API_KEY);
 
-  Serial.println("Setup");
-  
-  /* Iinit I2C sensor */
+  // Iinit I2C sensor
   tsl2561.begin();
   htu21df.begin();
 
-  /* Init the connection to analog sensor (input or output entry) */
+  // Init the connection to analog sensor (input or output entry)
   pinMode(PIN_HYSRF05_PRESENCE_ECHO, INPUT);
   pinMode(PIN_HYSRF05_PRESENCE_TRIGGER, OUTPUT);
   pinMode(PIN_LM358_SOUND, INPUT);
 }
 
-/* Here is the part of the program which will be loop executed */
+// Here is the part of the program which will be loop executed
 void loop() 
 {
-  /* Here we cumulate the values read on analog sensor on each loop (to do the average value then) */
+  // Here we cumulate the values read on analog sensor on each loop (to do the average value then)
   values_HYSRF05_PRESENCE += read_HYSRF05_PRESENCE();
   values_LM358_SOUND += read_LM358_SOUND();
 
-  /* Counter of loops */
+  // Counter of loops
   cpt++;
   
   if (cpt >= PUBLISH)
   {
-    /* Doing the average of values read by analog sensor  */
+    // Doing the average of values read by analog sensor
     double presence_HYSRF05 = values_HYSRF05_PRESENCE / cpt;
     double sound_LM358 = values_LM358_SOUND / cpt;
 
-    /* Getting the values from I2C digital sensors */
+    // Getting the values from I2C digital sensors
     long light_TSL2561 = tsl2561.readVisibleLux();
     double humidity_HTU21DF = htu21df.readHumidity();
     double temperature_HTU21DF = htu21df.readTemperature();
 
+    Serial.print("SOUND (dB) : ");
     Serial.println(sound_LM358);
+    Serial.print("PRESENCE (cm) : ");
     Serial.println(presence_HYSRF05);
+    Serial.print("LIGHT (lux) : ");
     Serial.println(light_TSL2561);
+    Serial.print("HUMIDITY (%) : ");
     Serial.println(humidity_HTU21DF);
+    Serial.print("TEMPERATURE (C°) : ");
     Serial.println(temperature_HTU21DF);
     
     // Preparing the request
@@ -103,13 +114,13 @@ void loop()
     // Sending datas
     sensorbox.send();
 
-    /* Re-initiliazing variables */
+    // Re-initiliazing variables
     cpt = 0;
     values_HYSRF05_PRESENCE = 0;
     values_LM358_SOUND = 0;
   }
 
-  /* Pausing the program 10 milliseconds */
+  // Pausing the program 10 milliseconds
   delay(TIME_SLEEP);
 }
 
@@ -122,7 +133,7 @@ void loop()
  *  - When there is an reflect signal back, the ECHO I/O will output a high level, the duration of the high_level signal is the time from untral sonic launch to return
  *  - As a result, the measured distance = (T(Time of High Level output ) * Speed of Sound(340M / S)) / 2
  */
-long read_HYSRF05_PRESENCE()
+long read_HYSRF05_PRESENCE(double temperature)
 {
   /* Give a short LOW pulse beforehand to ensure a clean HIGH pulse */
   digitalWrite(PIN_HYSRF05_PRESENCE_TRIGGER, LOW);
@@ -131,10 +142,12 @@ long read_HYSRF05_PRESENCE()
   delayMicroseconds(10);
   digitalWrite(PIN_HYSRF05_PRESENCE_TRIGGER, LOW);
   long duration = pulseIn(PIN_HYSRF05_PRESENCE_ECHO, HIGH, 50000); // Timeout of 50ms
- 
-  /* Convert the time into a distance */
-  long distanceCm = duration / 29.1 / 2 ;
-  //double distanceIn = duration / 74 / 2;
+
+  // Getting the speed of sound in cm/µs
+  double speedSound = (331.3 + 0.606 * temperature) / 10000;
+
+  long distanceCm = (duration * speedSound) / 2 ;
+  //double distanceIn = ((duration * speedSound) / 2) / 2.54;
 
   return distanceCm;
 }
@@ -170,9 +183,9 @@ double read_LM358_SOUND()
   if (signalMax - signalMin > 10)
     peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
     
-  double volts = peakToPeak * (5000 / 1024);  // convert to mV
+  double volts = peakToPeak * (ADC_VALUE / 1024);  // convert to mV
 
-  double dB = 20 * log(volts/30);
+  double dB = 20 * log(volts/35);
 
   return dB;
 }

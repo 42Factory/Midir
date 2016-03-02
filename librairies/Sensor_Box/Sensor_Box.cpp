@@ -8,10 +8,14 @@ bool SensorBox::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _
 	
 	if (SDConnected)
 	{
-		rtc = new DS3231(SDA, SCL);
-		rtc->begin();
-		
 		Serial.println("SD Card detected !");
+		
+		DS3231 rtc(SDA, SCL);
+		rtc.begin();
+		
+		TimeRTC t = rtc.getTimeRTC();
+		
+		setTime(t.hour, t.min, t.sec, t.date, t.mon, t.year);
 		
 		SD.mkdir("/SENSB/");
 	}
@@ -68,12 +72,7 @@ bool SensorBox::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _
 void SensorBox::prepare()
 {
 	if (SDConnected)
-	{
-		String s_date = String(rtc->getDateStr());
-		String s_time = String(rtc->getTimeStr());
-		
-		request = "[" + s_date + " " + s_time + "]";
-	}
+		request = "[" + String(this->getDateStr()) + " " + String(this->getTimeStr()) + "]";
 	else
 		request = "GET /update?api_key=" + this->TS_API_KEY;
 }
@@ -91,20 +90,13 @@ void SensorBox::addData(int indexField, String name, double value)
 
 bool SensorBox::send()
 {
-	Serial.println("==1==");
-	Serial.println(rtc->getTimeStr());
-	Serial.println("==2==");
-	
 	if (SDConnected)
 	{
-		String rtcDate = String(rtc->getDateStr(FORMAT_SHORT));
-		rtcDate.replace('.', '-');
+		String srcFile = "/SENSB/" + String(this->getDateStr()) + ".txt";
 		
-		String srcFile = "/SENSB/" + rtcDate + ".txt"; // "SENSORBOX/" + 
-		 
 		Serial.println(srcFile);
 		
-		File file = SD.open(srcFile, FILE_WRITE); // srcFile.c_str()
+		File file = SD.open(srcFile, FILE_WRITE);
 
 		if (file)
 		{
@@ -121,7 +113,10 @@ bool SensorBox::send()
 		if(!wifiConnected)
 			return false;
 		
-		String cmd = "AT+CIPSTART=\"TCP\",\"" + this->TS_SERVER + "\",80";
+		String server_addr = this->TS_SERVER.substring(0, this->TS_SERVER.indexOf(':'));
+		String server_port = this->TS_SERVER.substring(this->TS_SERVER.indexOf(':') + 1);
+
+		String cmd = "AT+CIPSTART=\"TCP\",\"" + server_addr + "\"," + server_port;
 
 		if(!this->sendATCommand(cmd, 10000, "Linked || ALREAY CONNECT"))
 		{
@@ -129,9 +124,9 @@ bool SensorBox::send()
 			return false;
 		}
 		
-		String s_length = String(request.length() + 2);
+		//this->request += " HTTP/1.1 Host: " + this->TS_SERVER + " Connection: close Accept: */*";
 		
-		cmd = "AT+CIPSEND=" + s_length;
+		cmd = "AT+CIPSEND=" + String(request.length() + 2);
 		
 		if(!this->sendATCommand(cmd, 10000, ">"))
 		{
@@ -173,7 +168,7 @@ void SensorBox::sendATCommand(String ATcommand)
 bool SensorBox::sendATCommand(String ATcommand, int timeout, String expectedAnswer)
 {
 	while (SerialESP8266->available())
-		SerialESP8266->read();    // Clean the input buffer
+		SerialESP8266->read();
 
 	Serial.println(ATcommand);
 	
@@ -184,7 +179,6 @@ bool SensorBox::sendATCommand(String ATcommand, int timeout, String expectedAnsw
 		unsigned long previousTimer = millis();
 		String response = "";
 
-		// Tant que l'on a pas reçu la réponse voulu et que le timeout n'est pas écoulé
 		while ((millis() - previousTimer) < timeout)
 		{
 			while (SerialESP8266->available())
@@ -232,4 +226,61 @@ void SensorBox::resetESP()
 	digitalWrite(PIN_ESP_RESET, LOW);
 	delay(100);
 	digitalWrite(PIN_ESP_RESET, HIGH);
+}
+
+char* SensorBox::getTimeStr()
+{	
+	static char output[] = "xxxxxxxx";
+
+	if (hour()<10)
+		output[0]=48;
+	else
+		output[0]=char((hour() / 10)+48);
+	output[1]=char((hour() % 10)+48);
+	output[2]=58;
+	if (minute()<10)
+		output[3]=48;
+	else
+		output[3]=char((minute() / 10)+48);
+	output[4]=char((minute() % 10)+48);
+	output[5]=58;
+	
+	if (second()<10)
+		output[6]=48;
+	else
+		output[6]=char((second() / 10)+48);
+	output[7]=char((second() % 10)+48);
+	output[8]=0;
+	
+	return (char*)&output;
+}
+
+char* SensorBox::getDateStr()
+{
+	static char output[] = "xxxxxxxxxx";
+	char divider = '-';
+	int yr, offset;
+
+	if (day()<10)
+		output[0]=48;
+	else
+		output[0]=char((day() / 10)+48);
+	output[1]=char((day() % 10)+48);
+	output[2]=divider;
+	if (month()<10)
+		output[3]=48;
+	else
+		output[3]=char((month() / 10)+48);
+	output[4]=char((month() % 10)+48);
+	output[5]=divider;
+	
+	yr=year()-2000;
+	if (yr<10)
+		output[6]=48;
+	else
+		output[6]=char((yr / 10)+48);
+	output[7]=char((yr % 10)+48);
+	output[8]=0;
+		
+	return (char*)&output;
 }
