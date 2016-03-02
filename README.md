@@ -162,5 +162,7 @@ rake db:schema:load
 ```
 #!shell
 
-rails server
+rails server webrick
 ```
+
+/!\ Without Webrick esp8266 request failed !
