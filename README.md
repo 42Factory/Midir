@@ -138,7 +138,7 @@ cp config/database.yml.example config/database.yml
 ```
 
 **Edit config/database.yml**
-change user passwork with your credit
+change user password with your credit
 
 
 ```
