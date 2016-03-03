@@ -1,23 +1,27 @@
-#include "Sensor_Box.h"
+#include "Midir.h"
 
 // Importing needed librairies for I2C digital sensor */
 #include "Digital_Light_TSL2561.h"
 #include "HTU21DF.h"
 
+
+
 // Wifi settings
-#define WIFI_SSID "42Factory"
-#define WIFI_WPA_KEY "answeris42"
+#define WIFI_SSID "YOUR_WIFI_NAME"
+#define WIFI_WPA_KEY "YOUR_WIFI_PASSWORD"
 
 // ThingSpeak settings
 #define THINGSPEAK_SERVER "api.thingspeak.com:80"
-#define THINGSPEAK_API_KEY "6Z6JCTHT3YZEOMXM"
-//#define THINGSPEAK_SERVER "172.21.9.118:3000"
-//#define THINGSPEAK_API_KEY "CAH53VTAOJF4I56H"
+#define THINGSPEAK_API_KEY "YOUR_API_KEY"
+
+// Fields for Thingspeaks Channel from 1 to 8
 #define FIELD_TEMPERATURE 1
 #define FIELD_HUMIDITY 2
 #define FIELD_PRESENCE 3
 #define FIELD_SOUND 4
 #define FIELD_LIGHT 5
+
+
 
 // Program settings
 #define DEBUG true
@@ -30,6 +34,8 @@
 #define PIN_HYSRF05_PRESENCE_TRIGGER 9
 #define PIN_LM358_SOUND A2
 
+
+
 // Required to define optionnal parameter
 // To measure distance from the HYSRF05, the 
 long read_HYSRF05_PRESENCE(double temperature = 23.00);
@@ -39,6 +45,8 @@ long values_HYSRF05_PRESENCE = 0;
 double values_LM358_SOUND = 0;
 int cpt = 0;
 
+
+
 // Here is the part of the program which will be executed once on start-up
 void setup() 
 {
@@ -47,8 +55,8 @@ void setup()
 
   Serial.println("Setup");
 
-  // Initializing the Sensorbox
-  sensorbox.begin(WIFI_SSID, WIFI_WPA_KEY, THINGSPEAK_SERVER, THINGSPEAK_API_KEY);
+  // Initializing Midir
+  midir.begin(WIFI_SSID, WIFI_WPA_KEY, THINGSPEAK_SERVER, THINGSPEAK_API_KEY);
 
   // Iinit I2C sensor
   tsl2561.begin();
@@ -58,7 +66,18 @@ void setup()
   pinMode(PIN_HYSRF05_PRESENCE_ECHO, INPUT);
   pinMode(PIN_HYSRF05_PRESENCE_TRIGGER, OUTPUT);
   pinMode(PIN_LM358_SOUND, INPUT);
+
+
+  /**********************************/
+  /********* Your Code Here *********/
+  /*********  INIT SENSORS  *********/
+
+  // pinMode(MY_SENSOR, INPUT);
+
+  /**********************************/
 }
+
+
 
 // Here is the part of the program which will be loop executed
 void loop() 
@@ -66,6 +85,16 @@ void loop()
   // Here we cumulate the values read on analog sensor on each loop (to do the average value then)
   values_HYSRF05_PRESENCE += read_HYSRF05_PRESENCE();
   values_LM358_SOUND += read_LM358_SOUND();
+
+
+  /**********************************/
+  /*******   Your Code Here   *******/
+  /******* READ SENSORS VALUE *******/
+
+  //my_sensor_value += analogRead(MY_SENSOR);
+
+  /**********************************/
+
 
   // Counter of loops
   cpt++;
@@ -80,39 +109,46 @@ void loop()
     long light_TSL2561 = tsl2561.readVisibleLux();
     double humidity_HTU21DF = htu21df.readHumidity();
     double temperature_HTU21DF = htu21df.readTemperature();
-
-    Serial.print("SOUND (dB) : ");
-    Serial.println(sound_LM358);
-    Serial.print("PRESENCE (cm) : ");
-    Serial.println(presence_HYSRF05);
-    Serial.print("LIGHT (lux) : ");
-    Serial.println(light_TSL2561);
-    Serial.print("HUMIDITY (%) : ");
-    Serial.println(humidity_HTU21DF);
-    Serial.print("TEMPERATURE (C°) : ");
-    Serial.println(temperature_HTU21DF);
+    
     
     // Preparing the request
-    sensorbox.prepare();
+    midir.prepare();
 
     // Adding datas    
-    sensorbox.addData(FIELD_PRESENCE, "Presence", presence_HYSRF05);
-    sensorbox.addData(FIELD_SOUND, "Sound", sound_LM358);
+    midir.addData(FIELD_PRESENCE, "Presence", presence_HYSRF05);
+    midir.addData(FIELD_SOUND, "Sound", sound_LM358);
 
     // 999 : HTU CRC_Check failed 
     // 998 : HTU is unplugged
     if (temperature_HTU21DF < 998)
-      sensorbox.addData(FIELD_TEMPERATURE, "Temperature", temperature_HTU21DF);
+      midir.addData(FIELD_TEMPERATURE, "Temperature", temperature_HTU21DF);
 
     if (humidity_HTU21DF < 998)
-      sensorbox.addData(FIELD_HUMIDITY, "Humidity", humidity_HTU21DF);
+      midir.addData(FIELD_HUMIDITY, "Humidity", humidity_HTU21DF);
 
     // -1 : TSL256 is unplugged
     if (light_TSL2561 > -1)
-      sensorbox.addData(FIELD_LIGHT, "Light", light_TSL2561);
+      midir.addData(FIELD_LIGHT, "Light", light_TSL2561);
+
+
+    /**********************************/
+    /*******   Your Code Here   *******/
+    /******* ADD VALUE TO MIDIR *******/
+
+    // my_sensor_average_value = my_sensor_value / cpt;
+    
+    // If you need to debug :
+    // Serial.print("My sensor : ");
+    // Serial.println(my_sensor_average_value);
+    
+    // midir.addData(FIELD_FOR_MY_SENSOR, "My Sensor", my_sensor_average_value);
+    // my_sensor_value = 0;
+
+    /**********************************/
+
 
     // Sending datas
-    sensorbox.send();
+    midir.send();
 
     // Re-initiliazing variables
     cpt = 0;
@@ -123,6 +159,9 @@ void loop()
   // Pausing the program 10 milliseconds
   delay(TIME_SLEEP);
 }
+
+
+
 
 /*  FUNCTION read_HYSRF05_PRESENCE() : 
  *  - PARAMS : 0
@@ -151,6 +190,9 @@ long read_HYSRF05_PRESENCE(double temperature)
 
   return distanceCm;
 }
+
+
+
 
 /*  FUNCTION read_LM358_SOUND() : 
  *  - PARAMS : 0

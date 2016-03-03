@@ -1,8 +1,8 @@
-#include "Sensor_Box.h"
+#include "Midir.h"
 
-SensorBox sensorbox;
+Midir midir;
 
-bool SensorBox::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _TS_API_KEY)
+bool Midir::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _TS_API_KEY)
 {
 	SDConnected = SD.begin(SS);
 	
@@ -17,7 +17,7 @@ bool SensorBox::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _
 		
 		setTime(t.hour, t.min, t.sec, t.date, t.mon, t.year);
 		
-		SD.mkdir("/SENSB/");
+		SD.mkdir("/MIDIR/");
 	}
 	else
 	{
@@ -69,7 +69,7 @@ bool SensorBox::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _
 	return true;
 }
 
-void SensorBox::prepare()
+void Midir::prepare()
 {
 	if (SDConnected)
 		request = "[" + String(this->getDateStr()) + " " + String(this->getTimeStr()) + "]";
@@ -77,7 +77,7 @@ void SensorBox::prepare()
 		request = "GET /update?api_key=" + this->TS_API_KEY;
 }
 
-void SensorBox::addData(int indexField, String name, double value)
+void Midir::addData(int indexField, String name, double value)
 {
 	String s_value = String(value);
 	String s_indexField = String(indexField);
@@ -88,7 +88,7 @@ void SensorBox::addData(int indexField, String name, double value)
 		request += "&field" + s_indexField + "=" + s_value;
 }
 
-bool SensorBox::send()
+bool Midir::send()
 {
 	if (SDConnected)
 	{
@@ -148,7 +148,7 @@ bool SensorBox::send()
 	return true;
 }
 
-bool SensorBox::connectWifi()
+bool Midir::connectWifi()
 {
 	this->sendATCommand("AT+CWMODE=1");
 
@@ -160,12 +160,12 @@ bool SensorBox::connectWifi()
 	return true;
 }
 
-void SensorBox::sendATCommand(String ATcommand)
+void Midir::sendATCommand(String ATcommand)
 {
 	this->sendATCommand(ATcommand, 0, "");
 }
 
-bool SensorBox::sendATCommand(String ATcommand, int timeout, String expectedAnswer)
+bool Midir::sendATCommand(String ATcommand, int timeout, String expectedAnswer)
 {
 	while (SerialESP8266->available())
 		SerialESP8266->read();
@@ -221,14 +221,14 @@ bool SensorBox::sendATCommand(String ATcommand, int timeout, String expectedAnsw
 		return true;
 }
 
-void SensorBox::resetESP()
+void Midir::resetESP()
 {
 	digitalWrite(PIN_ESP_RESET, LOW);
 	delay(100);
 	digitalWrite(PIN_ESP_RESET, HIGH);
 }
 
-char* SensorBox::getTimeStr()
+char* Midir::getTimeStr()
 {	
 	static char output[] = "xxxxxxxx";
 
@@ -255,7 +255,7 @@ char* SensorBox::getTimeStr()
 	return (char*)&output;
 }
 
-char* SensorBox::getDateStr()
+char* Midir::getDateStr()
 {
 	static char output[] = "xxxxxxxxxx";
 	char divider = '-';

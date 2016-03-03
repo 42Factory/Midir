@@ -11,7 +11,7 @@
 
 #define PIN_ESP_RESET 22
 
-class SensorBox {
+class Midir {
 
 private:
   //SoftwareSerial *SerialESP8266;
@@ -37,5 +37,5 @@ public:
   bool send();
 };
 
- extern SensorBox sensorbox;
+ extern Midir midir;
 
