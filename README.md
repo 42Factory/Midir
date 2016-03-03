@@ -118,13 +118,9 @@ cd thingspeak
 
 ```
 #!shell
-
-sudo apt-get install bundler
+gem install bundler
 
 ```
-
-**Edit Gemfile**
-change line *gem 'ZenTest'* by *gem 'ZenTest', '4.8.3'*
 
 ```
 #!shell
