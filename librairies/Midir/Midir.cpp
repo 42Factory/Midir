@@ -92,7 +92,7 @@ bool Midir::send()
 {
 	if (SDConnected)
 	{
-		String srcFile = "/SENSB/" + String(this->getDateStr()) + ".txt";
+		String srcFile = "/MIDIR/" + String(this->getDateStr()) + ".txt";
 		
 		Serial.println(srcFile);
 		
@@ -121,6 +121,7 @@ bool Midir::send()
 		if(!this->sendATCommand(cmd, 10000, "Linked || ALREAY CONNECT"))
 		{
 			Serial.println("Unable to reach the ThingSpeak server");
+			this->sendATCommand("AT+CIPCLOSE");
 			return false;
 		}
 		

@@ -4,15 +4,13 @@
 #include "Digital_Light_TSL2561.h"
 #include "HTU21DF.h"
 
-
-
 // Wifi settings
-#define WIFI_SSID "YOUR_WIFI_NAME"
-#define WIFI_WPA_KEY "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "42-RPI-Midir"
+#define WIFI_WPA_KEY "42rpimidir"
 
 // ThingSpeak settings
-#define THINGSPEAK_SERVER "api.thingspeak.com:80"
-#define THINGSPEAK_API_KEY "YOUR_API_KEY"
+#define THINGSPEAK_SERVER "192.168.42.254:3000"
+#define THINGSPEAK_API_KEY "Q1ADLJ5D5E3RKHRE"
 
 // Fields for Thingspeaks Channel from 1 to 8
 #define FIELD_TEMPERATURE 1
@@ -20,8 +18,7 @@
 #define FIELD_PRESENCE 3
 #define FIELD_SOUND 4
 #define FIELD_LIGHT 5
-
-
+//#define FIELD_FOR_MY_SENSOR YOUR_INDEX_FIELD
 
 // Program settings
 #define DEBUG true
@@ -34,8 +31,6 @@
 #define PIN_HYSRF05_PRESENCE_TRIGGER 9
 #define PIN_LM358_SOUND A2
 
-
-
 // Required to define optionnal parameter
 // To measure distance from the HYSRF05, the 
 long read_HYSRF05_PRESENCE(double temperature = 23.00);
@@ -44,7 +39,6 @@ long read_HYSRF05_PRESENCE(double temperature = 23.00);
 long values_HYSRF05_PRESENCE = 0;
 double values_LM358_SOUND = 0;
 int cpt = 0;
-
 
 
 // Here is the part of the program which will be executed once on start-up
@@ -91,10 +85,11 @@ void loop()
   /*******   Your Code Here   *******/
   /******* READ SENSORS VALUE *******/
 
-  //my_sensor_value += analogRead(MY_SENSOR);
+  // my_sensor_value_total += analogRead(PIN_MY_SENSOR);
+  // == OR with a method ==
+  // my_sensor_value_total += my_sensor_read_method();
 
   /**********************************/
-
 
   // Counter of loops
   cpt++;
@@ -135,13 +130,13 @@ void loop()
     /*******   Your Code Here   *******/
     /******* ADD VALUE TO MIDIR *******/
 
-    // my_sensor_average_value = my_sensor_value / cpt;
+    // double my_sensor_value_average = my_sensor_value_total / cpt;
     
     // If you need to debug :
     // Serial.print("My sensor : ");
-    // Serial.println(my_sensor_average_value);
+    // Serial.println(my_sensor_value_average);
     
-    // midir.addData(FIELD_FOR_MY_SENSOR, "My Sensor", my_sensor_average_value);
+    // midir.addData(FIELD_FOR_MY_SENSOR, "My Sensor", my_sensor_value_average);
     // my_sensor_value = 0;
 
     /**********************************/
