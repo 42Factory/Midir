@@ -15,6 +15,11 @@ Arduino based simple and modulable system to get environments information using 
 - A SD Card module to save datas if no Wi-Fi network is available
 - And RTC DS3231 module to keep the clock time and write it on the SD Card with datas
 
+|Directory                 |Description                                                |
+|--------------------------|-----------------------------------------------------------|
+|librairies                |Sensors libraires and datasheet                            |
+|librairies/Midir          |Midir librairy used to send datas                          |
+|midir.ino                 |Arduino sketch main program                                |
 
 ### Basic Sensors
 |Sensor         |Type                                  |
@@ -24,15 +29,7 @@ Arduino based simple and modulable system to get environments information using 
 |LM386          |Noise (dB)                            |
 |TSL2561T       |Light (lux)                           |
 
-
-|Directory                 |Description                                                |
-|--------------------------|-----------------------------------------------------------|
-|librairies                |Sensors libraires and datasheet                            |
-|librairies/Midir          |Midir librairy used to send datas                          |
-|midir.ino                 |Arduino sketch main program                                |
-
-
-
 #### Partners on this project :
 [42 Factory](http://42factory.com)
+
 [Stereolux Nantes](http://www.stereolux.org)
