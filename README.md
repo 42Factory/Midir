@@ -15,10 +15,21 @@ Arduino based simple and modulable system to get environments information using 
 - A **SD Card** module to save datas if no Wi-Fi network is available
 - And **RTC DS3231** module to keep the clock time and write it on the SD Card with datas
 
+![Midir Box](http://img4.hostingpics.net/pics/360237allinone.jpg)
+![Midir Box](http://img4.hostingpics.net/pics/51351820160304115252.jpg)
+_First version of the Midir_
+
+### Wiring schema
+
+![Midir Wiring Schema](http://img11.hostingpics.net/pics/584818Sensorboxbb.png)
+
+Note : We try first to wire the SD card module to the 5v as it have a 5v pin, but it seems having trouble with that. We try to wire it to the 3v3 deliver by the MB102 regulator, but it cause irregular voltage and so trouble to read it. The only solution was to wire it to the 3v3 pin on the Arduino Mega and so it working as well.
+
+### Repositery
 |Directory                 |Description                                                |
 |--------------------------|-----------------------------------------------------------|
-|libraries                |Sensors libraires and datasheet                            |
-|libraries/Midir          |Midir librairy used to send datas                          |
+|libraries                 |Sensors libraires and datasheet                            |
+|libraries/Midir           |Midir librairy used to send datas                          |
 |midir.ino                 |Arduino sketch main program                                |
 
 ### Basic Sensors
