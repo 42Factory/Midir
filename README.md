@@ -29,3 +29,9 @@ Arduino based simple and modulable system to get environments information using 
 |librairies                |Sensors libraires and datasheet                            |
 |librairies/Midir          |Midir librairy used to send datas                          |
 |midir.ino                 |Arduino sketch main program                                |
+
+
+
+#### Partners on this project :
+[42 Factory](http://42factory.com)
+[Stereolux Nantes](http://www.stereolux.org)
