@@ -21,7 +21,7 @@ _First version of Midir_
 
 ### Wiring schema
 
-![Midir Wiring Schema](http://img11.hostingpics.net/pics/584818Sensorboxbb.png)
+![Midir Wiring Schema](http://img15.hostingpics.net/pics/222695Midirbb.png)
 [Download the Fritzing file](https://github.com/42Factory/Midir/raw/master/Midir.fzz)
 
 Note : We try first to wire the SD card module to the 5v as it have a 5v pin, but it seems having trouble with that. We try to wire it to the 3v3 deliver by the MB102 regulator, but it cause irregular voltage and so trouble to read it. The only solution was to wire it to the 3v3 pin on the Arduino Mega and so it working as well.
