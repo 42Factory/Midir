@@ -25,6 +25,7 @@ bool Midir::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _TS_A
 		this->WPA_KEY = _WPA_KEY;
 		this->TS_SERVER = _TS_SERVER;
 		this->TS_API_KEY = _TS_API_KEY;
+		this->nbTries = 0;
 		
 		digitalWrite(PIN_ESP_RESET, HIGH);
 		
@@ -52,18 +53,6 @@ bool Midir::begin(String _SSID, String _WPA_KEY, String _TS_SERVER, String _TS_A
 		this->sendATCommand("AT+RST", 10000, "ready");
 		
 		wifiConnected = this->connectWifi();
-		
-		if(!wifiConnected)
-		{
-			Serial.print("Unable to connect to the SSID ");
-			Serial.println(this->SSID);
-			return false;
-		}
-		else
-		{
-			Serial.print("Now connected to ");
-			Serial.println(this->SSID);
-		}
 	}
 	
 	return true;
@@ -118,35 +107,46 @@ bool Midir::send()
 
 		String cmd = "AT+CIPSTART=\"TCP\",\"" + server_addr + "\"," + server_port;
 
-		if(!this->sendATCommand(cmd, 10000, "Linked || ALREAY CONNECT"))
+		if(this->sendATCommand(cmd, 10000, "Linked || ALREADY CONNECT"))
 		{
-			Serial.println("Unable to reach the ThingSpeak server");
-			this->sendATCommand("AT+CIPCLOSE");
-			return false;
+			cmd = "AT+CIPSEND=" + String(request.length() + 2);
+			
+			if(this->sendATCommand(cmd, 30000, ">"))
+			{
+				if(this->sendATCommand(request, 30000, "SEND OK"))
+				{
+					this->nbTries = 0;
+					this->sendATCommand("AT+CIPCLOSE");
+					Serial.println("Data sent to the ThingSpeak server !");
+					return true;
+				}
+			}
 		}
 		
-		//this->request += " HTTP/1.1 Host: " + this->TS_SERVER + " Connection: close Accept: */*";
+		Serial.println("Unable to reach the ThingSpeak server");
+		this->sendATCommand("AT+CIPCLOSE");
 		
-		cmd = "AT+CIPSEND=" + String(request.length() + 2);
+		this->nbTries++;
 		
-		if(!this->sendATCommand(cmd, 10000, ">"))
+		if (this->nbTries >= 3)
 		{
-			Serial.println("Unable to reach the ThingSpeak server");
-			this->sendATCommand("AT+CIPCLOSE");
-			return false;
+			Serial.println("Reseting the ESP8266...");
+			
+			this->resetESP();
+			
+			delay(2000);
+			
+			if (!this->sendATCommand("AT", 10000, "OK"))
+				Serial.println("Unable to connect with the ESP8266");
+			else
+			{
+				this->nbTries = 0;
+				wifiConnected = this->connectWifi();
+			}
 		}
 		
-		if(!this->sendATCommand(request, 15000, "SEND OK"))
-		{
-			Serial.println("Unable to reach the ThingSpeak server");
-			this->sendATCommand("AT+CIPCLOSE");
-			return false;
-		}
-		
-		Serial.println("Data sent to the ThingSpeak server !");
+		return false;
 	}
-	
-	return true;
 }
 
 bool Midir::connectWifi()
@@ -156,7 +156,14 @@ bool Midir::connectWifi()
 	String cmd = "AT+CWJAP=\"" + this->SSID + "\",\"" + this->WPA_KEY + "\"";
 
 	if(!this->sendATCommand(cmd, 15000, "OK"))
+	{
+		Serial.print("Unable to connect to the SSID ");
+		Serial.println(this->SSID);
 		return false;
+	}
+	
+	Serial.print("Now connected to ");
+	Serial.println(this->SSID);
 	
 	return true;
 }

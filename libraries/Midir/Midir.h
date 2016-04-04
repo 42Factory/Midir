@@ -21,6 +21,7 @@ private:
   String TS_SERVER;
   String TS_API_KEY;
   String request;
+  unsigned int nbTries;
   bool wifiConnected;
   bool SDConnected;
   bool sendATCommand(String ATcommand, int timeout, String expectedAnswer);
