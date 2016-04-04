@@ -9,7 +9,7 @@
 #define WIFI_WPA_KEY "42rpimidir"
 
 // ThingSpeak settings
-#define THINGSPEAK_SERVER "192.168.42.254:3000"
+#define THINGSPEAK_SERVER "192.168.42.254:3000" // If you use the thingspeak.com server : "api.thingspeak.com:80"
 #define THINGSPEAK_API_KEY "Q1ADLJ5D5E3RKHRE"
 
 // Fields for Thingspeaks Channel from 1 to 8
