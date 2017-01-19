@@ -62,8 +62,13 @@ void Midir::prepare()
 {
 	if (SDConnected)
 		request = "[" + String(this->getDateStr()) + " " + String(this->getTimeStr()) + "]";
-	else
+	else {
+		request = "";
+		request += "HTTP/1.1\r\n";
+    	request += "Host: api.thingspeak.com\r\n";
+    	request += "Content-Type: text/x-www-form-urlencoded\r\n";
 		request = "GET /update?api_key=" + this->TS_API_KEY;
+	}
 }
 
 void Midir::addData(int indexField, String name, double value)

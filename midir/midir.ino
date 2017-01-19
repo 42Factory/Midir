@@ -5,12 +5,12 @@
 #include "HTU21DF.h"
 
 // Wifi settings
-#define WIFI_SSID "42-RPI-Midir"
-#define WIFI_WPA_KEY "42rpimidir"
+#define WIFI_SSID ""
+#define WIFI_WPA_KEY ""
 
 // ThingSpeak settings
-#define THINGSPEAK_SERVER "192.168.42.254:3000" // If you use the thingspeak.com server : "api.thingspeak.com:80"
-#define THINGSPEAK_API_KEY "Q1ADLJ5D5E3RKHRE"
+#define THINGSPEAK_SERVER "api.thingspeak.com:80" // If you use the thingspeak.com server : "api.thingspeak.com:80"
+#define THINGSPEAK_API_KEY ""
 
 // Fields for Thingspeaks Channel from 1 to 8
 #define FIELD_TEMPERATURE 1
@@ -23,12 +23,12 @@
 // Program settings
 #define DEBUG true
 #define TIME_SLEEP 10           // Time in ms between each loop
-#define PUBLISH 100             // Number of loop between each transmission of datas
+#define PUBLISH 300             // Number of loop between each transmission of datas
 #define ADC_VALUE 4600          // Votlage measured on 5V pin
 
 // Here we define PINS on which analog sensor are connected to
-#define PIN_HYSRF05_PRESENCE_ECHO 8
-#define PIN_HYSRF05_PRESENCE_TRIGGER 9
+#define PIN_HYSRF05_PRESENCE_ECHO 46
+#define PIN_HYSRF05_PRESENCE_TRIGGER 47
 #define PIN_LM358_SOUND A2
 
 // Required to define optionnal parameter
@@ -36,10 +36,11 @@
 long read_HYSRF05_PRESENCE(double temperature = 23.00);
 
 // Declaring variables
-long values_HYSRF05_PRESENCE = 0;
+int checkPassage = 0;
+int nbPassages = 0;
 double values_LM358_SOUND = 0;
 int cpt = 0;
-
+int distance_presence_trig = 10;
 
 // Here is the part of the program which will be executed once on start-up
 void setup() 
@@ -76,8 +77,22 @@ void setup()
 // Here is the part of the program which will be loop executed
 void loop() 
 {
+
+  int distance = read_HYSRF05_PRESENCE();
   // Here we cumulate the values read on analog sensor on each loop (to do the average value then)
-  values_HYSRF05_PRESENCE += read_HYSRF05_PRESENCE();
+  if (distance < distance_presence_trig - 20)
+  {
+    if (checkPassage == 2)
+    {
+      nbPassages++;
+    }
+    checkPassage++;
+  }
+  else if (checkPassage > 0){
+    checkPassage = 0;
+    distance_presence_trig = distance;
+  }
+      
   values_LM358_SOUND += read_LM358_SOUND();
 
 
@@ -97,7 +112,6 @@ void loop()
   if (cpt >= PUBLISH)
   {
     // Doing the average of values read by analog sensor
-    double presence_HYSRF05 = values_HYSRF05_PRESENCE / cpt;
     double sound_LM358 = values_LM358_SOUND / cpt;
 
     // Getting the values from I2C digital sensors
@@ -110,7 +124,7 @@ void loop()
     midir.prepare();
 
     // Adding datas    
-    midir.addData(FIELD_PRESENCE, "Presence", presence_HYSRF05);
+    midir.addData(FIELD_PRESENCE, "Presence", nbPassages);
     midir.addData(FIELD_SOUND, "Sound", sound_LM358);
 
     // 999 : HTU CRC_Check failed 
@@ -147,7 +161,7 @@ void loop()
 
     // Re-initiliazing variables
     cpt = 0;
-    values_HYSRF05_PRESENCE = 0;
+    nbPassages = 0;
     values_LM358_SOUND = 0;
   }
 
@@ -181,8 +195,10 @@ long read_HYSRF05_PRESENCE(double temperature)
   double speedSound = (331.3 + 0.606 * temperature) / 10000;
 
   long distanceCm = (duration * speedSound) / 2 ;
-  //double distanceIn = ((duration * speedSound) / 2) / 2.54;
 
+  if(distanceCm > distance_presence_trig)
+    distance_presence_trig = distanceCm;
+    
   return distanceCm;
 }
 
