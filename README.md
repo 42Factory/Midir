@@ -56,4 +56,4 @@ This tool allow us to collect data from our sensor and vizualise their evolution
 #### Partners on this project :
 [42 Factory](http://42factory.com)  
 [Stereolux Nantes](http://www.stereolux.org)
-[Chaire Environnements Connectés BPA-LIPPI](http://blogs.lecolededesign.com/environnementsconnectes)
+![Chaire Environnements Connectés BPA-LIPPI](http://blogs.lecolededesign.com/environnementsconnectes)
